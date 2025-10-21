@@ -18,6 +18,8 @@ const Auth = () => {
     const [userId, setUserId] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
+    const [emailValid, setEmailValid] = useState(false);
+    const [usernameValid, setUsernameValid] = useState(false);
 
     const handleLogin = () => {
         setLoading(true);
@@ -137,6 +139,27 @@ const Auth = () => {
         setShowPassword2(!showPassword2);
     };
 
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const validateUsername = (username) => {
+        return username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+    };
+
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setEmail(value);
+        setEmailValid(validateEmail(value));
+    };
+
+    const handleUsernameChange = (e) => {
+        const value = e.target.value;
+        setUsername(value);
+        setUsernameValid(validateUsername(value));
+    };
+
     return (
         <Container>
             <ToastContainer position="top-right" autoClose={2000} />
@@ -145,7 +168,9 @@ const Auth = () => {
                     <>
                         <Title>Init session</Title>
                         <InputWrapper>
-                            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
+                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
+                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
                         </InputWrapper>
                         <InputWrapper>
                             <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -164,10 +189,14 @@ const Auth = () => {
                     <>
                         <Title>Register</Title>
                         <InputWrapper>
-                            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
+                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
+                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
                         </InputWrapper>
                         <InputWrapper>
-                            <Input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                            <Input type="text" placeholder="Username" value={username} onChange={handleUsernameChange} />
+                            {username && !usernameValid && <Alert>Username must be 3-20 characters, letters, numbers and _ only</Alert>}
+                            {username && usernameValid && <SuccessMessage>✓ Valid username format</SuccessMessage>}
                         </InputWrapper>
                         <InputWrapper>
                             <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -197,7 +226,9 @@ const Auth = () => {
                     <>
                         <Title>Change Password</Title>
                         <InputWrapper>
-                            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
+                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
+                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
                         </InputWrapper>
                         <InputWrapper>
                             <Input type={showPassword ? 'text' : 'password'} placeholder="New Password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -365,4 +396,12 @@ const Alert = styled.div`
   margin-top: 5px;
   text-align: left;
   text-shadow: 0 0 5px rgba(233, 30, 99, 0.5);
+`;
+
+const SuccessMessage = styled.div`
+  color: #4CAF50;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  text-align: left;
+  text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 `;
