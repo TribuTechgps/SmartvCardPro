@@ -22,20 +22,38 @@ const Auth = () => {
     const [usernameValid, setUsernameValid] = useState(false);
 
     const handleLogin = () => {
+        if (!email || !password) {
+            toast.error('Por favor ingresa tu email y contraseña');
+            return;
+        }
+
         setLoading(true);
         axios.post('https://startapp360.com/api/v1/token/', { email, password })
             .then(response => {
                 const { access } = response.data;
-                localStorage.setItem('token', access);
-                setToken(access);
-                toast.success('Success login 🎉');
-                setTimeout(() => {
+                if (access) {
+                    localStorage.setItem('token', access);
+                    setToken(access);
                     window.location.href = '/';
-                }, 1500);
+                } else {
+                    toast.error('No se recibió un token válido del servidor');
+                }
             })
             .catch(error => {
                 console.error('Login error:', error.response ? error.response.data : error);
-                toast.error('Error in login 😞');
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        toast.error('Email o contraseña incorrectos. Verifica tus credenciales');
+                    } else if (error.response.status === 400) {
+                        toast.error('Datos inválidos. Por favor verifica tu email y contraseña');
+                    } else {
+                        toast.error(`Error: ${error.response.data?.detail || error.response.data?.message || 'Error al iniciar sesión'}`);
+                    }
+                } else if (error.request) {
+                    toast.error('No se pudo conectar con el servidor. Verifica tu conexión a internet');
+                } else {
+                    toast.error('Error inesperado al iniciar sesión');
+                }
             })
             .finally(() => setLoading(false));
     };
@@ -166,24 +184,54 @@ const Auth = () => {
             <AuthBox>
                 {!isRegistering && !isChangingPassword ? (
                     <>
-                        <Title>Init session</Title>
-                        <InputWrapper>
-                            <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
-                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
-                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
-                        </InputWrapper>
-                        <InputWrapper>
-                            <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                            <Icon onClick={toggleShowPassword}>
-                                {showPassword ? <FaEyeSlash /> : <FaEye />}
-                            </Icon>
-                        </InputWrapper>
-                        <Button onClick={handleLogin} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            {loading ? <ThreeDots color="#fff" height={20} width={50} /> : 'Login'}
-                        </Button>
-                        <Text>
-                            <LinkText onClick={toggleRegister}>Register</LinkText> | <LinkText onClick={toggleChangePassword}>Change Password</LinkText>
-                        </Text>
+                        <Title>Iniciar Sesión</Title>
+                        {token ? (
+                            <>
+                                <SuccessMessage style={{ textAlign: 'center', marginBottom: '1rem', padding: '10px', borderRadius: '8px', background: 'rgba(76, 175, 80, 0.2)' }}>
+                                    ✓ Ya estás autenticado. Tus tarjetas se guardarán en la nube automáticamente.
+                                </SuccessMessage>
+                                <Button 
+                                    onClick={() => {
+                                        localStorage.removeItem('token');
+                                        setToken('');
+                                        toast.info('Sesión cerrada');
+                                    }} 
+                                    style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'center', 
+                                        alignItems: 'center', 
+                                        marginTop: '0.5rem',
+                                        background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                                        width: '100%'
+                                    }}
+                                >
+                                    Cerrar Sesión
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                                    Inicia sesión para guardar tus tarjetas en la nube
+                                </Text>
+                                <InputWrapper>
+                                    <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
+                                    {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
+                                    {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
+                                </InputWrapper>
+                                <InputWrapper>
+                                    <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                                    <Icon onClick={toggleShowPassword}>
+                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </Icon>
+                                </InputWrapper>
+                                <Button onClick={handleLogin} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} disabled={loading}>
+                                    {loading ? <ThreeDots color="#fff" height={20} width={50} /> : 'Iniciar Sesión'}
+                                </Button>
+                                <Text>
+                                    <LinkText onClick={toggleRegister}>Register</LinkText> | <LinkText onClick={toggleChangePassword}>Change Password</LinkText>
+                                </Text>
+                            </>
+                        )}
                     </>
                 ) : isRegistering ? (
                     <>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import useCardStore from '../store/cardStore';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const CardEditor = () => {
   const navigate = useNavigate();
@@ -67,6 +68,35 @@ const CardEditor = () => {
   });
 
   const [previewMode, setPreviewMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [imageOrientation, setImageOrientation] = useState('vertical'); // 'horizontal' o 'vertical' - por defecto vertical para coincidir con layout
+
+  useEffect(() => {
+    // Verificar si hay un token válido
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const currentTime = Date.now() / 1000;
+          const timeUntilExpiry = payload.exp - currentTime;
+          const twentyFourHours = 24 * 60 * 60;
+          
+          setIsAuthenticated(payload.exp && timeUntilExpiry > -twentyFourHours);
+        } catch (error) {
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+    // Verificar cada vez que cambie el localStorage
+    const interval = setInterval(checkAuth, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (cardId) {
@@ -75,14 +105,22 @@ const CardEditor = () => {
         setCurrentCard(cardId);
         setContactData(card.contactData);
         setDesign(card.design);
+        // Sincronizar orientación con layout
+        if (card.design?.layout) {
+          setImageOrientation(card.design.layout);
+        }
       }
     } else if (currentCard) {
       setContactData(currentCard.contactData);
       setDesign(currentCard.design);
+      // Sincronizar orientación con layout
+      if (currentCard.design?.layout) {
+        setImageOrientation(currentCard.design.layout);
+      }
     }
   }, [cardId, currentCard, cards, setCurrentCard]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!contactData.firstName || !contactData.lastName) {
       toast.error('Por favor completa al menos el nombre y apellido');
       return;
@@ -93,6 +131,7 @@ const CardEditor = () => {
       design,
     };
 
+    // Guardar localmente
     if (currentCard) {
       updateCard(currentCard.id, cardData);
       toast.success('Tarjeta actualizada correctamente');
@@ -100,6 +139,88 @@ const CardEditor = () => {
       const newCard = createCard(cardData);
       toast.success('Tarjeta creada correctamente');
       navigate(`/preview/${newCard.id}`);
+    }
+
+    // Guardar en la API
+    const token = localStorage.getItem('token');
+    if (token) {
+      setSaving(true);
+      try {
+        // Preparar datos de la vcard completa
+        const vcardData = {
+          title: `${contactData.firstName} ${contactData.lastName} - ${contactData.company || 'Business Card'}`,
+          description: `Business Card: ${contactData.jobTitle || ''} | ${contactData.email || ''} | ${contactData.phone || ''}`,
+          // Incluir toda la información de contacto
+          vcard_data: {
+            firstName: contactData.firstName,
+            lastName: contactData.lastName,
+            company: contactData.company,
+            jobTitle: contactData.jobTitle,
+            email: contactData.email,
+            phone: contactData.phone,
+            website: contactData.website,
+            address: contactData.address,
+            linkedin: contactData.linkedin,
+            twitter: contactData.twitter,
+            instagram: contactData.instagram,
+            facebook: contactData.facebook,
+            whatsapp: contactData.whatsapp,
+            bio: contactData.bio,
+            design: design
+          },
+          // Si hay foto, convertirla a base64
+          image_base64: contactData.photo || contactData.logo || null
+        };
+
+        // Extraer base64 si es una data URL
+        if (vcardData.image_base64 && vcardData.image_base64.startsWith('data:')) {
+          vcardData.image_base64 = vcardData.image_base64.split(',')[1];
+        }
+
+        // Si hay logo también, podemos enviarlo como imagen separada
+        if (contactData.logo && contactData.logo !== vcardData.image_base64) {
+          let logoBase64 = contactData.logo;
+          if (logoBase64.startsWith('data:')) {
+            logoBase64 = logoBase64.split(',')[1];
+          }
+          
+          // Guardar el logo como imagen separada
+          await axios.post(
+            'https://startapp360.com/api/v1/userimage/',
+            {
+              title: `${contactData.company || contactData.firstName} Logo`,
+              description: `Logo de empresa para ${contactData.firstName} ${contactData.lastName}`,
+              image_base64: logoBase64
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+        }
+
+        // Guardar la vcard completa
+        const response = await axios.post(
+          'https://startapp360.com/api/v1/userimage/',
+          vcardData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        toast.success('VCard guardada en la nube exitosamente 🎉');
+      } catch (error) {
+        console.error('Error guardando en la API:', error.response?.data || error.message);
+        // No mostrar error al usuario si falla la API, ya que se guardó localmente
+        // toast.error('Error al guardar en la nube, pero se guardó localmente');
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -116,7 +237,8 @@ const CardEditor = () => {
     reader.onload = (e) => {
       setContactData(prev => ({
         ...prev,
-        [field]: e.target.result
+        [field]: e.target.result,
+        [`${field}Orientation`]: imageOrientation
       }));
     };
     reader.readAsDataURL(file);
@@ -125,7 +247,8 @@ const CardEditor = () => {
   const removeImage = (field) => {
     setContactData(prev => ({
       ...prev,
-      [field]: null
+      [field]: null,
+      [`${field}Orientation`]: null
     }));
   };
 
@@ -153,6 +276,20 @@ const CardEditor = () => {
             <p className="text-chocolate-200">
               {currentCard ? 'Modifica los datos de tu tarjeta' : 'Crea tu tarjeta de visita digital'}
             </p>
+            {!isAuthenticated && (
+              <p className="text-yellow-400 text-sm mt-2 flex items-center gap-2">
+                <span>⚠️</span>
+                <span>
+                  <a href="/auth" className="underline hover:text-yellow-300">Inicia sesión</a> para guardar tus tarjetas en la nube
+                </span>
+              </p>
+            )}
+            {isAuthenticated && (
+              <p className="text-green-400 text-sm mt-2 flex items-center gap-2">
+                <span>✓</span>
+                <span>Autenticado - Tus tarjetas se guardarán en la nube automáticamente</span>
+              </p>
+            )}
           </div>
         </div>
         
@@ -166,10 +303,11 @@ const CardEditor = () => {
           </button>
           <button
             onClick={handleSave}
-            className="bg-gradient-to-r from-fucsia-500 to-fucsia-600 hover:from-fucsia-600 hover:to-fucsia-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-glow-fucsia shine-effect"
+            disabled={saving}
+            className="bg-gradient-to-r from-fucsia-500 to-fucsia-600 hover:from-fucsia-600 hover:to-fucsia-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-glow-fucsia shine-effect disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save size={18} />
-            <span>Guardar</span>
+            <span>{saving ? 'Guardando...' : 'Guardar'}</span>
           </button>
         </div>
       </div>
@@ -391,7 +529,51 @@ const CardEditor = () => {
 
                   {/* Images */}
                   <div>
+                    {/* Orientation Selector */}
+                    <div className="flex items-center justify-center gap-3 mb-4 p-3 bg-carbon-600/30 rounded-lg border border-red-500/30">
+                      <span className="text-sm text-texto font-medium">Orientación:</span>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setImageOrientation('horizontal');
+                            setDesign(prev => ({ ...prev, layout: 'horizontal' }));
+                          }}
+                          className={`px-4 py-2 border-2 rounded transition-all flex flex-col items-center justify-center gap-1 ${
+                            imageOrientation === 'horizontal'
+                              ? 'border-red-500 bg-red-500/40 shadow-lg text-white'
+                              : 'border-red-500/70 bg-transparent hover:border-red-500 hover:bg-red-500/20 text-texto'
+                          }`}
+                        >
+                          <div className={`w-12 h-6 border-2 rounded ${
+                            imageOrientation === 'horizontal'
+                              ? 'border-white bg-white/30'
+                              : 'border-red-500/50'
+                          }`}></div>
+                          <span className="text-xs font-medium">Horizontal</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setImageOrientation('vertical');
+                            setDesign(prev => ({ ...prev, layout: 'vertical' }));
+                          }}
+                          className={`px-4 py-2 border-2 rounded transition-all flex flex-col items-center justify-center gap-1 ${
+                            imageOrientation === 'vertical'
+                              ? 'border-red-500 bg-red-500/40 shadow-lg text-white'
+                              : 'border-red-500/70 bg-transparent hover:border-red-500 hover:bg-red-500/20 text-texto'
+                          }`}
+                        >
+                          <div className={`w-6 h-12 border-2 rounded ${
+                            imageOrientation === 'vertical'
+                              ? 'border-white bg-white/30'
+                              : 'border-red-500/50'
+                          }`}></div>
+                          <span className="text-xs font-medium">Vertical</span>
+                        </button>
+                      </div>
+                    </div>
+                    
                     <h3 className="text-lg font-medium text-texto mb-4">Imágenes</h3>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-chocolate-200 mb-2">
@@ -403,7 +585,16 @@ const CardEditor = () => {
                               <img
                                 src={contactData.photo}
                                 alt="Profile"
-                                className="w-24 h-24 mx-auto rounded-full object-cover"
+                                className={`mx-auto rounded-full object-cover ${
+                                  contactData.photoOrientation === 'vertical' 
+                                    ? 'w-16 h-24' 
+                                    : 'w-24 h-16'
+                                }`}
+                                style={{
+                                  transform: contactData.photoOrientation === 'vertical' 
+                                    ? 'rotate(90deg)' 
+                                    : 'none'
+                                }}
                               />
                               <button
                                 onClick={() => removeImage('photo')}
@@ -444,7 +635,16 @@ const CardEditor = () => {
                               <img
                                 src={contactData.logo}
                                 alt="Logo"
-                                className="w-24 h-24 mx-auto object-contain"
+                                className={`mx-auto object-contain ${
+                                  contactData.logoOrientation === 'vertical' 
+                                    ? 'w-16 h-24' 
+                                    : 'w-24 h-16'
+                                }`}
+                                style={{
+                                  transform: contactData.logoOrientation === 'vertical' 
+                                    ? 'rotate(90deg)' 
+                                    : 'none'
+                                }}
                               />
                               <button
                                 onClick={() => removeImage('logo')}
@@ -643,7 +843,11 @@ const CardEditor = () => {
           <div className="luxury-card rounded-lg p-6 veladura-turquesa">
             <h3 className="text-lg font-medium text-texto mb-4">Vista Previa</h3>
             <div 
-              className="w-full max-w-sm mx-auto border rounded-lg p-6 relative overflow-hidden"
+              className={`mx-auto border rounded-lg p-6 relative overflow-hidden ${
+                design.layout === 'horizontal' 
+                  ? 'w-full max-w-2xl' 
+                  : 'w-full max-w-sm'
+              }`}
               style={{
                 background: design.backgroundColor.includes('gradient') 
                   ? design.backgroundColor 
@@ -658,30 +862,33 @@ const CardEditor = () => {
                            design.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
                            design.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
                            '0 10px 25px rgba(0,0,0,0.15)',
+                display: design.layout === 'horizontal' ? 'flex' : 'block',
+                flexDirection: design.layout === 'horizontal' ? 'row' : 'column',
+                gap: design.layout === 'horizontal' ? '1.5rem' : '0',
               }}
             >
               {/* Header */}
-              <div className="text-center mb-6">
+              <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-4 border-r border-opacity-20' : 'text-center mb-6'}`}>
                 {contactData.photo && (
                   <img
                     src={contactData.photo}
                     alt="Profile"
-                    className="w-20 h-20 mx-auto rounded-full object-cover mb-4"
+                    className={`${design.layout === 'horizontal' ? 'w-16 h-16' : 'w-20 h-20 mx-auto'} rounded-full object-cover ${design.layout === 'horizontal' ? 'mb-2' : 'mb-4'}`}
                   />
                 )}
-                <h2 className="text-xl font-bold" style={{ color: design.primaryColor }}>
+                <h2 className={`${design.layout === 'horizontal' ? 'text-lg' : 'text-xl'} font-bold ${design.layout === 'horizontal' ? 'text-left' : 'text-center'}`} style={{ color: design.primaryColor }}>
                   {contactData.firstName} {contactData.lastName}
                 </h2>
                 {contactData.jobTitle && (
-                  <p className="text-sm opacity-80">{contactData.jobTitle}</p>
+                  <p className={`text-sm opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.jobTitle}</p>
                 )}
                 {contactData.company && (
-                  <p className="text-sm opacity-80">{contactData.company}</p>
+                  <p className={`text-sm opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.company}</p>
                 )}
               </div>
 
               {/* Contact Info */}
-              <div className="space-y-3 mb-6">
+              <div className={`${design.layout === 'horizontal' ? 'flex-1' : ''} space-y-3 ${design.layout === 'horizontal' ? '' : 'mb-6'}`}>
                 {contactData.email && (
                   <div className="flex items-center space-x-2 text-sm">
                     <Mail size={16} />
@@ -758,7 +965,9 @@ const CardEditor = () => {
             <div className="p-6">
               <div className="max-w-2xl mx-auto">
                 <div 
-                  className="luxury-card rounded-lg shadow-luxury p-8 mx-auto relative overflow-hidden"
+                  className={`luxury-card rounded-lg shadow-luxury p-8 mx-auto relative overflow-hidden ${
+                    design.layout === 'horizontal' ? 'max-w-4xl' : 'max-w-2xl'
+                  }`}
                   style={{
                     background: design.backgroundColor.includes('gradient') 
                       ? design.backgroundColor 
@@ -773,33 +982,36 @@ const CardEditor = () => {
                                design.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
                                design.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
                                '0 10px 25px rgba(0,0,0,0.15)',
+                    display: design.layout === 'horizontal' ? 'flex' : 'block',
+                    flexDirection: design.layout === 'horizontal' ? 'row' : 'column',
+                    gap: design.layout === 'horizontal' ? '2rem' : '0',
                   }}
                 >
                   {/* Header */}
-                  <div className="text-center mb-8">
+                  <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-6 border-r border-opacity-20' : 'text-center mb-8'}`}>
                     {contactData.photo && (
                       <img
                         src={contactData.photo}
                         alt={`${contactData.firstName} ${contactData.lastName}`}
-                        className="w-32 h-32 mx-auto rounded-full object-cover mb-6 border-4 border-white shadow-lg"
+                        className={`${design.layout === 'horizontal' ? 'w-24 h-24' : 'w-32 h-32 mx-auto'} rounded-full object-cover ${design.layout === 'horizontal' ? 'mb-4' : 'mb-6'} border-4 border-white shadow-lg`}
                       />
                     )}
                     <h1 
-                      className="text-3xl font-bold mb-2"
+                      className={`${design.layout === 'horizontal' ? 'text-2xl' : 'text-3xl'} font-bold mb-2 ${design.layout === 'horizontal' ? 'text-left' : ''}`}
                       style={{ color: design.primaryColor }}
                     >
                       {contactData.firstName} {contactData.lastName}
                     </h1>
                     {contactData.jobTitle && (
-                      <p className="text-lg opacity-80 mb-1">{contactData.jobTitle}</p>
+                      <p className={`text-lg opacity-80 mb-1 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.jobTitle}</p>
                     )}
                     {contactData.company && (
-                      <p className="text-lg font-semibold opacity-80">{contactData.company}</p>
+                      <p className={`text-lg font-semibold opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.company}</p>
                     )}
                   </div>
 
                   {/* Contact Information */}
-                  <div className="space-y-4 mb-8">
+                  <div className={`${design.layout === 'horizontal' ? 'flex-1' : ''} space-y-4 ${design.layout === 'horizontal' ? '' : 'mb-8'}`}>
                     {contactData.email && (
                       <div className="flex items-center space-x-3 p-3">
                         <Mail size={20} />
