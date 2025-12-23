@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Plus, 
@@ -10,14 +10,18 @@ import {
   Copy,
   Share2,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  X
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import useCardStore from '../store/cardStore';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { cards, deleteCard, setCurrentCard } = useCardStore();
   const location = useLocation();
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState(null);
 
   const checkAuthAndRedirect = (path) => {
     const token = localStorage.getItem('token');
@@ -81,6 +85,20 @@ const Dashboard = () => {
     } else {
       handleCopyLink(cardId);
     }
+  };
+
+  const handleShowQR = (cardId) => {
+    setSelectedCardId(cardId);
+    setShowQRModal(true);
+  };
+
+  const handleCloseQR = () => {
+    setShowQRModal(false);
+    setSelectedCardId(null);
+  };
+
+  const getQRUrl = (cardId) => {
+    return `${window.location.origin}/preview/${cardId}`;
   };
 
   const stats = {
@@ -224,6 +242,14 @@ const Dashboard = () => {
                     </Link>
                     
                     <button
+                      onClick={() => handleShowQR(card.id)}
+                      className="p-2 text-texto hover:text-blue-500 hover:bg-blue-500/20 rounded-lg transition-all"
+                      title="Ver QR"
+                    >
+                      <QrCode size={18} />
+                    </button>
+                    
+                    <button
                       onClick={() => handleCopyLink(card.id)}
                       className="p-2 text-texto hover:text-fucsia-300 hover:bg-fucsia-500/20 rounded-lg transition-all hover:shadow-glow-fucsia"
                       title="Copiar enlace"
@@ -266,6 +292,54 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* QR Modal */}
+      {showQRModal && selectedCardId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="luxury-card rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-texto">Código QR</h3>
+              <button
+                onClick={handleCloseQR}
+                className="p-2 text-chocolate-200 hover:text-texto hover:bg-carbon-600 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="text-center">
+              <div className="bg-gray-50 rounded-lg p-6 mb-4 flex justify-center">
+                <QRCodeSVG
+                  value={getQRUrl(selectedCardId)}
+                  size={256}
+                  level="M"
+                  includeMargin={true}
+                  bgColor="#FFFFFF"
+                  fgColor="#000000"
+                />
+              </div>
+              <p className="text-sm text-chocolate-200 mb-3">
+                Escanea para compartir esta tarjeta
+              </p>
+              <div className="text-sm text-chocolate-200">
+                <p className="mb-2">Enlace incluido en el QR:</p>
+                <p className="break-all bg-gray-100 p-2 rounded text-xs">
+                  {getQRUrl(selectedCardId)}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  handleCopyLink(selectedCardId);
+                  handleCloseQR();
+                }}
+                className="mt-4 bg-gradient-to-r from-fucsia-500 to-fucsia-600 hover:from-fucsia-600 hover:to-fucsia-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors mx-auto"
+              >
+                <Copy size={18} />
+                <span>Copiar Enlace</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
