@@ -527,7 +527,7 @@ const CardEditor = () => {
                       value={contactData.bio}
                       onChange={(e) => setContactData(prev => ({ ...prev, bio: e.target.value }))}
                       rows={4}
-                      className="w-full px-3 py-2 border border-borde rounded-lg focus:ring-2 focus:ring-fucsia-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-borde rounded-lg focus:ring-2 focus:ring-fucsia-500 focus:border-transparent text-black"
                       placeholder="Cuéntanos sobre ti..."
                     />
                   </div>
@@ -848,10 +848,10 @@ const CardEditor = () => {
           <div className="luxury-card rounded-lg p-6 veladura-turquesa">
             <h3 className="text-lg font-medium text-texto mb-4">Vista Previa</h3>
             <div 
-              className={`mx-auto border rounded-lg p-6 relative overflow-hidden ${
+              className={`mx-auto border rounded-lg relative overflow-hidden word-wrap ${
                 design.layout === 'horizontal' 
-                  ? 'w-full max-w-2xl' 
-                  : 'w-full max-w-sm'
+                  ? 'w-full max-w-4xl p-8' 
+                  : 'w-full max-w-sm p-6'
               }`}
               style={{
                 background: design.backgroundColor.includes('gradient') 
@@ -869,74 +869,131 @@ const CardEditor = () => {
                            '0 10px 25px rgba(0,0,0,0.15)',
                 display: design.layout === 'horizontal' ? 'flex' : 'block',
                 flexDirection: design.layout === 'horizontal' ? 'row' : 'column',
-                gap: design.layout === 'horizontal' ? '1.5rem' : '0',
+                gap: design.layout === 'horizontal' ? '2.5rem' : '0',
               }}
             >
               {/* Header */}
-              <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-4 border-r border-opacity-20' : 'text-center mb-6'}`}>
+              <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-8 min-w-0 max-w-[200px] flex flex-col justify-center' : 'text-center mb-6'}`}>
                 {contactData.photo && (
                   <img
                     src={contactData.photo}
                     alt="Profile"
-                    className={`${design.layout === 'horizontal' ? 'w-16 h-16' : 'w-20 h-20 mx-auto'} rounded-full object-cover ${design.layout === 'horizontal' ? 'mb-2' : 'mb-4'}`}
+                    className={`${design.layout === 'horizontal' ? 'w-16 h-16' : 'w-20 h-20 mx-auto'} rounded-full object-cover ${design.layout === 'horizontal' ? 'mb-3' : 'mb-4'}`}
                   />
                 )}
-                <h2 className={`${design.layout === 'horizontal' ? 'text-lg' : 'text-xl'} font-bold ${design.layout === 'horizontal' ? 'text-left' : 'text-center'}`} style={{ color: design.primaryColor }}>
+                <h2 className={`${design.layout === 'horizontal' ? 'text-base' : 'text-xl'} font-bold ${design.layout === 'horizontal' ? 'text-left' : 'text-center'} break-words overflow-wrap-anywhere mb-1.5`} style={{ color: design.primaryColor }}>
                   {contactData.firstName} {contactData.lastName}
                 </h2>
                 {contactData.jobTitle && (
-                  <p className={`text-sm opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.jobTitle}</p>
+                  <p className={`${design.layout === 'horizontal' ? 'text-xs' : 'text-sm'} opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere mb-1`}>{contactData.jobTitle}</p>
                 )}
                 {contactData.company && (
-                  <p className={`text-sm opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.company}</p>
+                  <p className={`${design.layout === 'horizontal' ? 'text-xs' : 'text-sm'} opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}>{contactData.company}</p>
                 )}
               </div>
 
               {/* Contact Info */}
-              <div className={`${design.layout === 'horizontal' ? 'flex-1' : ''} space-y-3 ${design.layout === 'horizontal' ? '' : 'mb-6'}`}>
-                {contactData.email && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Mail size={16} />
-                    <span>{contactData.email}</span>
+              <div className={`${design.layout === 'horizontal' ? 'flex-1 flex flex-col min-w-0 justify-center' : ''} ${design.layout === 'horizontal' ? '' : 'mb-6'}`}>
+                {design.layout === 'horizontal' ? (
+                  <div className="flex gap-8 min-w-0">
+                    {/* Columna izquierda: Información de contacto */}
+                    <div className="flex-1 space-y-2.5 min-w-0">
+                      {contactData.email && (
+                        <div className="flex items-start space-x-2.5 text-xs min-w-0">
+                          <Mail size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.email}</span>
+                        </div>
+                      )}
+                      {contactData.phone && (
+                        <div className="flex items-start space-x-2.5 text-xs min-w-0">
+                          <Phone size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.phone}</span>
+                        </div>
+                      )}
+                      {contactData.website && (
+                        <div className="flex items-start space-x-2.5 text-xs min-w-0">
+                          <Globe size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.website}</span>
+                        </div>
+                      )}
+                      {contactData.address && (
+                        <div className="flex items-start space-x-2.5 text-xs min-w-0">
+                          <MapPin size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.address}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Columna derecha: Redes sociales y biografía */}
+                    <div className="flex-1 space-y-3 min-w-0 pl-4 flex flex-col">
+                      {/* Social Media */}
+                      {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                        <div className="flex flex-wrap gap-2.5">
+                          {contactData.linkedin && <Linkedin size={18} />}
+                          {contactData.twitter && <Twitter size={18} />}
+                          {contactData.instagram && <Instagram size={18} />}
+                          {contactData.facebook && <Facebook size={18} />}
+                          {contactData.whatsapp && <MessageCircle size={18} />}
+                        </div>
+                      )}
+
+                      {/* Bio */}
+                      {contactData.bio && (
+                        <div className="text-xs opacity-80 text-left break-words overflow-wrap-anywhere leading-relaxed">
+                          {contactData.bio}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                {contactData.phone && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Phone size={16} />
-                    <span>{contactData.phone}</span>
-                  </div>
-                )}
-                {contactData.website && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Globe size={16} />
-                    <span>{contactData.website}</span>
-                  </div>
-                )}
-                {contactData.address && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <MapPin size={16} />
-                    <span>{contactData.address}</span>
-                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {contactData.email && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Mail size={16} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.email}</span>
+                        </div>
+                      )}
+                      {contactData.phone && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Phone size={16} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.phone}</span>
+                        </div>
+                      )}
+                      {contactData.website && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Globe size={16} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.website}</span>
+                        </div>
+                      )}
+                      {contactData.address && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <MapPin size={16} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.address}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Social Media */}
+                    {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                      <div className="flex justify-center space-x-4 mt-4 mb-4">
+                        {contactData.linkedin && <Linkedin size={20} />}
+                        {contactData.twitter && <Twitter size={20} />}
+                        {contactData.instagram && <Instagram size={20} />}
+                        {contactData.facebook && <Facebook size={20} />}
+                        {contactData.whatsapp && <MessageCircle size={20} />}
+                      </div>
+                    )}
+
+                    {/* Bio */}
+                    {contactData.bio && (
+                      <div className="text-sm opacity-80 text-center border-t pt-4 break-words overflow-wrap-anywhere max-h-32 overflow-y-auto">
+                        {contactData.bio}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
-
-              {/* Social Media */}
-              {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
-                <div className="flex justify-center space-x-4 mb-4">
-                  {contactData.linkedin && <Linkedin size={20} />}
-                  {contactData.twitter && <Twitter size={20} />}
-                  {contactData.instagram && <Instagram size={20} />}
-                  {contactData.facebook && <Facebook size={20} />}
-                  {contactData.whatsapp && <MessageCircle size={20} />}
-                </div>
-              )}
-
-              {/* Bio */}
-              {contactData.bio && (
-                <div className="text-sm opacity-80 text-center border-t pt-4 break-words overflow-wrap-anywhere max-h-32 overflow-y-auto">
-                  {contactData.bio}
-                </div>
-              )}
 
               {/* Logo Watermark */}
               {contactData.logo && (
@@ -968,10 +1025,10 @@ const CardEditor = () => {
             </div>
             
             <div className="p-6">
-              <div className="max-w-2xl mx-auto">
+              <div className={`mx-auto ${design.layout === 'horizontal' ? 'max-w-6xl' : 'max-w-2xl'}`}>
                 <div 
-                  className={`luxury-card rounded-lg shadow-luxury p-8 mx-auto relative overflow-hidden ${
-                    design.layout === 'horizontal' ? 'max-w-4xl' : 'max-w-2xl'
+                  className={`luxury-card rounded-lg shadow-luxury mx-auto relative overflow-hidden word-wrap ${
+                    design.layout === 'horizontal' ? 'w-full p-10' : 'w-full p-8'
                   }`}
                   style={{
                     background: design.backgroundColor.includes('gradient') 
@@ -989,11 +1046,11 @@ const CardEditor = () => {
                                '0 10px 25px rgba(0,0,0,0.15)',
                     display: design.layout === 'horizontal' ? 'flex' : 'block',
                     flexDirection: design.layout === 'horizontal' ? 'row' : 'column',
-                    gap: design.layout === 'horizontal' ? '2rem' : '0',
+                    gap: design.layout === 'horizontal' ? '3rem' : '0',
                   }}
                 >
                   {/* Header */}
-                  <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-6 border-r border-opacity-20' : 'text-center mb-8'}`}>
+                  <div className={`${design.layout === 'horizontal' ? 'flex-shrink-0 pr-10 min-w-0 max-w-[220px] flex flex-col justify-center' : 'text-center mb-8'}`}>
                     {contactData.photo && (
                       <img
                         src={contactData.photo}
@@ -1002,70 +1059,133 @@ const CardEditor = () => {
                       />
                     )}
                     <h1 
-                      className={`${design.layout === 'horizontal' ? 'text-2xl' : 'text-3xl'} font-bold mb-2 ${design.layout === 'horizontal' ? 'text-left' : ''}`}
+                      className={`${design.layout === 'horizontal' ? 'text-lg' : 'text-3xl'} font-bold mb-2 ${design.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}
                       style={{ color: design.primaryColor }}
                     >
                       {contactData.firstName} {contactData.lastName}
                     </h1>
                     {contactData.jobTitle && (
-                      <p className={`text-lg opacity-80 mb-1 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.jobTitle}</p>
+                      <p className={`${design.layout === 'horizontal' ? 'text-sm' : 'text-lg'} opacity-80 mb-1 ${design.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}>{contactData.jobTitle}</p>
                     )}
                     {contactData.company && (
-                      <p className={`text-lg font-semibold opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''}`}>{contactData.company}</p>
+                      <p className={`${design.layout === 'horizontal' ? 'text-sm' : 'text-lg'} font-semibold opacity-80 ${design.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}>{contactData.company}</p>
                     )}
                   </div>
 
                   {/* Contact Information */}
-                  <div className={`${design.layout === 'horizontal' ? 'flex-1' : ''} space-y-4 ${design.layout === 'horizontal' ? '' : 'mb-8'}`}>
-                    {contactData.email && (
-                      <div className="flex items-center space-x-3 p-3">
-                        <Mail size={20} />
-                        <span>{contactData.email}</span>
+                  <div className={`${design.layout === 'horizontal' ? 'flex-1 flex flex-col min-w-0 justify-center' : ''} ${design.layout === 'horizontal' ? '' : 'mb-8'}`}>
+                    {design.layout === 'horizontal' ? (
+                      <div className="flex gap-10 min-w-0">
+                        {/* Columna izquierda: Información de contacto */}
+                        <div className="flex-1 space-y-3 min-w-0">
+                          {contactData.email && (
+                            <div className="flex items-start space-x-3 min-w-0">
+                              <Mail size={18} className="flex-shrink-0 mt-0.5" />
+                              <span className="break-words overflow-wrap-anywhere text-sm">{contactData.email}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.phone && (
+                            <div className="flex items-start space-x-3 min-w-0">
+                              <Phone size={18} className="flex-shrink-0 mt-0.5" />
+                              <span className="break-words overflow-wrap-anywhere text-sm">{contactData.phone}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.website && (
+                            <div className="flex items-start space-x-3 min-w-0">
+                              <Globe size={18} className="flex-shrink-0 mt-0.5" />
+                              <span className="break-words overflow-wrap-anywhere text-sm">{contactData.website}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.address && (
+                            <div className="flex items-start space-x-3 min-w-0">
+                              <MapPin size={18} className="flex-shrink-0 mt-0.5" />
+                              <span className="break-words overflow-wrap-anywhere text-sm">{contactData.address}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Columna derecha: Redes sociales y biografía */}
+                        <div className="flex-1 space-y-3 min-w-0 pl-4 flex flex-col">
+                          {/* Social Media */}
+                          {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                            <div>
+                              <h3 className="text-base font-semibold mb-3 text-left">Redes Sociales</h3>
+                              <div className="flex flex-wrap gap-3">
+                                {contactData.linkedin && <Linkedin size={20} />}
+                                {contactData.twitter && <Twitter size={20} />}
+                                {contactData.instagram && <Instagram size={20} />}
+                                {contactData.facebook && <Facebook size={20} />}
+                                {contactData.whatsapp && <MessageCircle size={20} />}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Bio */}
+                          {contactData.bio && (
+                            <div className="text-left">
+                              <p className="text-sm leading-relaxed opacity-80 break-words overflow-wrap-anywhere">{contactData.bio}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    
-                    {contactData.phone && (
-                      <div className="flex items-center space-x-3 p-3">
-                        <Phone size={20} />
-                        <span>{contactData.phone}</span>
-                      </div>
-                    )}
-                    
-                    {contactData.website && (
-                      <div className="flex items-center space-x-3 p-3">
-                        <Globe size={20} />
-                        <span>{contactData.website}</span>
-                      </div>
-                    )}
-                    
-                    {contactData.address && (
-                      <div className="flex items-center space-x-3 p-3">
-                        <MapPin size={20} />
-                        <span>{contactData.address}</span>
-                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          {contactData.email && (
+                            <div className="flex items-center space-x-3 p-3">
+                              <Mail size={20} />
+                              <span className="break-words overflow-wrap-anywhere">{contactData.email}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.phone && (
+                            <div className="flex items-center space-x-3 p-3">
+                              <Phone size={20} />
+                              <span className="break-words overflow-wrap-anywhere">{contactData.phone}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.website && (
+                            <div className="flex items-center space-x-3 p-3">
+                              <Globe size={20} />
+                              <span className="break-words overflow-wrap-anywhere">{contactData.website}</span>
+                            </div>
+                          )}
+                          
+                          {contactData.address && (
+                            <div className="flex items-center space-x-3 p-3">
+                              <MapPin size={20} />
+                              <span className="break-words overflow-wrap-anywhere">{contactData.address}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Social Media */}
+                        {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                          <div className="mb-8 mt-8">
+                            <h3 className="text-lg font-semibold mb-4 text-center">Redes Sociales</h3>
+                            <div className="flex justify-center space-x-4">
+                              {contactData.linkedin && <Linkedin size={24} />}
+                              {contactData.twitter && <Twitter size={24} />}
+                              {contactData.instagram && <Instagram size={24} />}
+                              {contactData.facebook && <Facebook size={24} />}
+                              {contactData.whatsapp && <MessageCircle size={24} />}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Bio */}
+                        {contactData.bio && (
+                          <div className="text-center border-t pt-6">
+                            <p className="text-lg leading-relaxed opacity-80 break-words overflow-wrap-anywhere max-h-48 overflow-y-auto">{contactData.bio}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
-
-                  {/* Social Media */}
-                  {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-semibold mb-4 text-center">Redes Sociales</h3>
-                      <div className="flex justify-center space-x-4">
-                        {contactData.linkedin && <Linkedin size={24} />}
-                        {contactData.twitter && <Twitter size={24} />}
-                        {contactData.instagram && <Instagram size={24} />}
-                        {contactData.facebook && <Facebook size={24} />}
-                        {contactData.whatsapp && <MessageCircle size={24} />}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bio */}
-                  {contactData.bio && (
-                    <div className="text-center border-t pt-6">
-                      <p className="text-lg leading-relaxed opacity-80 break-words overflow-wrap-anywhere max-h-48 overflow-y-auto">{contactData.bio}</p>
-                    </div>
-                  )}
 
                   {/* Logo Watermark */}
                   {contactData.logo && (

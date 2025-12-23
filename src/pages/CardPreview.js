@@ -250,6 +250,12 @@ const CardPreview = () => {
   }
 
   const { contactData, design } = card;
+  
+  // Asegurar que el diseño tenga un layout definido
+  const cardDesign = {
+    ...design,
+    layout: design?.layout || 'vertical',
+  };
 
   return (
     <div className="min-h-screen bg-gradient-luxury">
@@ -305,154 +311,268 @@ const CardPreview = () => {
           <div className="lg:col-span-2">
             <div 
               ref={cardRef}
-              className="luxury-card rounded-lg shadow-lg p-8 relative overflow-hidden"
+              className={`luxury-card rounded-lg shadow-lg relative overflow-hidden word-wrap ${
+                cardDesign.layout === 'horizontal' 
+                  ? 'p-8' 
+                  : 'p-8'
+              }`}
               style={{
-                background: design.backgroundColor.includes('gradient') 
-                  ? design.backgroundColor 
-                  : design.backgroundColor,
-                backgroundColor: design.backgroundColor.includes('gradient') 
+                background: cardDesign.backgroundColor?.includes('gradient') 
+                  ? cardDesign.backgroundColor 
+                  : cardDesign.backgroundColor,
+                backgroundColor: cardDesign.backgroundColor?.includes('gradient') 
                   ? undefined 
-                  : design.backgroundColor,
-                color: design.textColor,
-                borderRadius: design.borderRadius,
-                fontFamily: design.fontFamily,
-                boxShadow: design.shadow === 'none' ? 'none' :
-                           design.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
-                           design.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
+                  : cardDesign.backgroundColor,
+                color: cardDesign.textColor,
+                borderRadius: cardDesign.borderRadius,
+                fontFamily: cardDesign.fontFamily,
+                boxShadow: cardDesign.shadow === 'none' ? 'none' :
+                           cardDesign.shadow === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' :
+                           cardDesign.shadow === 'medium' ? '0 4px 6px rgba(0,0,0,0.1)' :
                            '0 10px 25px rgba(0,0,0,0.15)',
+                display: cardDesign.layout === 'horizontal' ? 'flex' : 'block',
+                flexDirection: cardDesign.layout === 'horizontal' ? 'row' : 'column',
+                gap: cardDesign.layout === 'horizontal' ? '2.5rem' : '0',
               }}
             >
               {/* Header */}
-              <div className="text-center mb-8">
+              <div className={`${cardDesign.layout === 'horizontal' ? 'flex-shrink-0 pr-8 min-w-0 max-w-[200px] flex flex-col justify-center' : 'text-center mb-8'}`}>
                 {contactData.photo && (
                   <img
                     src={contactData.photo}
                     alt={`${contactData.firstName} ${contactData.lastName}`}
-                    className="w-32 h-32 mx-auto rounded-full object-cover mb-6 border-4 border-white shadow-lg"
+                    className={`${cardDesign.layout === 'horizontal' ? 'w-16 h-16' : 'w-32 h-32 mx-auto'} rounded-full object-cover ${cardDesign.layout === 'horizontal' ? 'mb-3' : 'mb-6'} border-4 border-white shadow-lg`}
                   />
                 )}
                 <h1 
-                  className="text-3xl font-bold mb-2"
-                  style={{ color: design.primaryColor }}
+                  className={`${cardDesign.layout === 'horizontal' ? 'text-base' : 'text-3xl'} font-bold mb-1.5 ${cardDesign.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}
+                  style={{ color: cardDesign.primaryColor }}
                 >
                   {contactData.firstName} {contactData.lastName}
                 </h1>
                 {contactData.jobTitle && (
-                  <p className="text-lg opacity-80 mb-1">{contactData.jobTitle}</p>
+                  <p className={`${cardDesign.layout === 'horizontal' ? 'text-xs' : 'text-lg'} opacity-80 mb-1 ${cardDesign.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}>{contactData.jobTitle}</p>
                 )}
                 {contactData.company && (
-                  <p className="text-lg font-semibold opacity-80">{contactData.company}</p>
+                  <p className={`${cardDesign.layout === 'horizontal' ? 'text-xs' : 'text-lg'} font-semibold opacity-80 ${cardDesign.layout === 'horizontal' ? 'text-left' : ''} break-words overflow-wrap-anywhere`}>{contactData.company}</p>
                 )}
               </div>
 
               {/* Contact Information */}
-              <div className="space-y-4 mb-8">
-                {contactData.email && (
-                  <button
-                    onClick={() => handleContact('email', contactData.email)}
-                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
-                  >
-                    <Mail size={20} />
-                    <span>{contactData.email}</span>
-                  </button>
-                )}
-                
-                {contactData.phone && (
-                  <button
-                    onClick={() => handleContact('phone', contactData.phone)}
-                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
-                  >
-                    <Phone size={20} />
-                    <span>{contactData.phone}</span>
-                  </button>
-                )}
-                
-                {contactData.website && (
-                  <button
-                    onClick={() => handleContact('website', contactData.website)}
-                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
-                  >
-                    <Globe size={20} />
-                    <span>{contactData.website}</span>
-                  </button>
-                )}
-                
-                {contactData.address && (
-                  <div className="flex items-center space-x-3 p-3">
-                    <MapPin size={20} />
-                    <span>{contactData.address}</span>
+              <div className={`${cardDesign.layout === 'horizontal' ? 'flex-1 flex flex-col min-w-0 justify-center' : ''} ${cardDesign.layout === 'horizontal' ? '' : 'mb-8'}`}>
+                {cardDesign.layout === 'horizontal' ? (
+                  <div className="flex gap-8 min-w-0">
+                    {/* Columna izquierda: Información de contacto */}
+                    <div className="flex-1 space-y-2.5 min-w-0">
+                      {contactData.email && (
+                        <button
+                          onClick={() => handleContact('email', contactData.email)}
+                          className="w-full flex items-start space-x-2.5 text-xs min-w-0 hover:opacity-80 transition-opacity"
+                        >
+                          <Mail size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere text-left">{contactData.email}</span>
+                        </button>
+                      )}
+                      {contactData.phone && (
+                        <button
+                          onClick={() => handleContact('phone', contactData.phone)}
+                          className="w-full flex items-start space-x-2.5 text-xs min-w-0 hover:opacity-80 transition-opacity"
+                        >
+                          <Phone size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere text-left">{contactData.phone}</span>
+                        </button>
+                      )}
+                      {contactData.website && (
+                        <button
+                          onClick={() => handleContact('website', contactData.website)}
+                          className="w-full flex items-start space-x-2.5 text-xs min-w-0 hover:opacity-80 transition-opacity"
+                        >
+                          <Globe size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere text-left">{contactData.website}</span>
+                        </button>
+                      )}
+                      {contactData.address && (
+                        <div className="flex items-start space-x-2.5 text-xs min-w-0">
+                          <MapPin size={16} className="flex-shrink-0 mt-0.5" />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.address}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Columna derecha: Redes sociales y biografía */}
+                    <div className="flex-1 space-y-3 min-w-0 pl-4 flex flex-col">
+                      {/* Social Media */}
+                      {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                        <div className="flex flex-wrap gap-2.5">
+                          {contactData.linkedin && (
+                            <button
+                              onClick={() => handleContact('linkedin', contactData.linkedin)}
+                              className="hover:opacity-80 transition-opacity"
+                              title="LinkedIn"
+                            >
+                              <Linkedin size={18} />
+                            </button>
+                          )}
+                          {contactData.twitter && (
+                            <button
+                              onClick={() => handleContact('twitter', contactData.twitter)}
+                              className="hover:opacity-80 transition-opacity"
+                              title="Twitter"
+                            >
+                              <Twitter size={18} />
+                            </button>
+                          )}
+                          {contactData.instagram && (
+                            <button
+                              onClick={() => handleContact('instagram', contactData.instagram)}
+                              className="hover:opacity-80 transition-opacity"
+                              title="Instagram"
+                            >
+                              <Instagram size={18} />
+                            </button>
+                          )}
+                          {contactData.facebook && (
+                            <button
+                              onClick={() => handleContact('facebook', contactData.facebook)}
+                              className="hover:opacity-80 transition-opacity"
+                              title="Facebook"
+                            >
+                              <Facebook size={18} />
+                            </button>
+                          )}
+                          {contactData.whatsapp && (
+                            <button
+                              onClick={() => handleContact('whatsapp', contactData.whatsapp)}
+                              className="hover:opacity-80 transition-opacity"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Bio */}
+                      {contactData.bio && (
+                        <div className="text-xs opacity-80 text-left break-words overflow-wrap-anywhere leading-relaxed">
+                          {contactData.bio}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* Contact Information */}
+                    <div className="space-y-4 mb-8">
+                      {contactData.email && (
+                        <button
+                          onClick={() => handleContact('email', contactData.email)}
+                          className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
+                        >
+                          <Mail size={20} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.email}</span>
+                        </button>
+                      )}
+                      
+                      {contactData.phone && (
+                        <button
+                          onClick={() => handleContact('phone', contactData.phone)}
+                          className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
+                        >
+                          <Phone size={20} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.phone}</span>
+                        </button>
+                      )}
+                      
+                      {contactData.website && (
+                        <button
+                          onClick={() => handleContact('website', contactData.website)}
+                          className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gradient-luxury transition-colors"
+                        >
+                          <Globe size={20} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.website}</span>
+                        </button>
+                      )}
+                      
+                      {contactData.address && (
+                        <div className="flex items-center space-x-3 p-3">
+                          <MapPin size={20} />
+                          <span className="break-words overflow-wrap-anywhere">{contactData.address}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Social Media */}
+                    {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
+                      <div className="mb-8">
+                        <h3 className="text-lg font-semibold mb-4 text-center">Redes Sociales</h3>
+                        <div className="flex justify-center space-x-4">
+                          {contactData.linkedin && (
+                            <button
+                              onClick={() => handleContact('linkedin', contactData.linkedin)}
+                              className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                              title="LinkedIn"
+                            >
+                              <Linkedin size={20} />
+                            </button>
+                          )}
+                          {contactData.twitter && (
+                            <button
+                              onClick={() => handleContact('twitter', contactData.twitter)}
+                              className="p-3 bg-blue-400 text-white rounded-full hover:bg-blue-500 transition-colors"
+                              title="Twitter"
+                            >
+                              <Twitter size={20} />
+                            </button>
+                          )}
+                          {contactData.instagram && (
+                            <button
+                              onClick={() => handleContact('instagram', contactData.instagram)}
+                              className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors"
+                              title="Instagram"
+                            >
+                              <Instagram size={20} />
+                            </button>
+                          )}
+                          {contactData.facebook && (
+                            <button
+                              onClick={() => handleContact('facebook', contactData.facebook)}
+                              className="p-3 bg-blue-800 text-white rounded-full hover:bg-blue-900 transition-colors"
+                              title="Facebook"
+                            >
+                              <Facebook size={20} />
+                            </button>
+                          )}
+                          {contactData.whatsapp && (
+                            <button
+                              onClick={() => handleContact('whatsapp', contactData.whatsapp)}
+                              className="p-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle size={20} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bio */}
+                    {contactData.bio && (
+                      <div className="text-center border-t pt-6">
+                        <p className="text-lg leading-relaxed opacity-80 break-words overflow-wrap-anywhere max-h-48 overflow-y-auto">{contactData.bio}</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Social Media */}
-              {(contactData.linkedin || contactData.twitter || contactData.instagram || contactData.facebook || contactData.whatsapp) && (
-                <div className="mb-8">
-                  <h3 className="text-lg font-semibold mb-4 text-center">Redes Sociales</h3>
-                  <div className="flex justify-center space-x-4">
-                    {contactData.linkedin && (
-                      <button
-                        onClick={() => handleContact('linkedin', contactData.linkedin)}
-                        className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-                        title="LinkedIn"
-                      >
-                        <Linkedin size={20} />
-                      </button>
-                    )}
-                    {contactData.twitter && (
-                      <button
-                        onClick={() => handleContact('twitter', contactData.twitter)}
-                        className="p-3 bg-blue-400 text-white rounded-full hover:bg-blue-500 transition-colors"
-                        title="Twitter"
-                      >
-                        <Twitter size={20} />
-                      </button>
-                    )}
-                    {contactData.instagram && (
-                      <button
-                        onClick={() => handleContact('instagram', contactData.instagram)}
-                        className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors"
-                        title="Instagram"
-                      >
-                        <Instagram size={20} />
-                      </button>
-                    )}
-                    {contactData.facebook && (
-                      <button
-                        onClick={() => handleContact('facebook', contactData.facebook)}
-                        className="p-3 bg-blue-800 text-white rounded-full hover:bg-blue-900 transition-colors"
-                        title="Facebook"
-                      >
-                        <Facebook size={20} />
-                      </button>
-                    )}
-                    {contactData.whatsapp && (
-                      <button
-                        onClick={() => handleContact('whatsapp', contactData.whatsapp)}
-                        className="p-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                        title="WhatsApp"
-                      >
-                        <MessageCircle size={20} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Bio */}
-              {contactData.bio && (
-                <div className="text-center border-t pt-6">
-                  <p className="text-lg leading-relaxed opacity-80 break-words overflow-wrap-anywhere max-h-48 overflow-y-auto">{contactData.bio}</p>
-                </div>
-              )}
-
               {/* Logo Watermark */}
               {contactData.logo && (
-                <div className="absolute bottom-4 right-4 opacity-60">
+                <div className={`absolute ${cardDesign.layout === 'horizontal' ? 'bottom-2 right-2' : 'bottom-4 right-4'} opacity-60`}>
                   <img
                     src={contactData.logo}
                     alt="Logo"
-                    className="w-10 h-10 object-contain"
+                    className={`${cardDesign.layout === 'horizontal' ? 'w-8 h-8' : 'w-10 h-10'} object-contain`}
                   />
                 </div>
               )}
