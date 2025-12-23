@@ -351,7 +351,7 @@ const CardPreview = () => {
                 <h3 className="text-lg font-medium text-texto mb-4">Código QR</h3>
                 <div className="text-center">
                   <QRCodeSVG
-                    value={window.location.href}
+                    value={`${window.location.origin}/preview/${cardId}`}
                     size={200}
                     level="M"
                     includeMargin={true}
