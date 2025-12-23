@@ -68,7 +68,7 @@ const CardPreview = () => {
         console.error('Error reading from localStorage:', error);
       }
 
-      // Si aún no se encuentra, intentar buscar en la API usando el ID del QR (apiId)
+      // Si aún no se encuentra, intentar buscar en la API usando el id local (vcard_data.id)
       try {
         const token = localStorage.getItem('token');
         const headers = token
@@ -77,13 +77,16 @@ const CardPreview = () => {
             }
           : undefined;
 
-        // Usar el ID del QR como ID del recurso en la API
+        // Obtener todas las vcards del usuario y buscar por vcard_data.id === cardId
         const response = await axios.get(
-          `https://startapp360.com/api/v1/userimage/${cardId}/`,
+          'https://startapp360.com/api/v1/userimage/',
           headers ? { headers } : undefined
         );
 
-        const apiCard = response.data;
+        const list = Array.isArray(response.data) ? response.data : [];
+        const apiCard = list.find(
+          (item) => item.vcard_data && item.vcard_data.id === cardId
+        );
 
         if (apiCard && apiCard.vcard_data) {
           // Convertir el formato de la API al formato esperado

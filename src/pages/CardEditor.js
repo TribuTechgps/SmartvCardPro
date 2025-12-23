@@ -155,6 +155,8 @@ const CardEditor = () => {
           description: `Business Card: ${contactData.jobTitle || ''} | ${contactData.email || ''} | ${contactData.phone || ''}`,
           // Incluir toda la información de contacto
           vcard_data: {
+            // Usar el id local de la tarjeta para poder recuperarla públicamente
+            id: localCardId,
             firstName: contactData.firstName,
             lastName: contactData.lastName,
             company: contactData.company,
@@ -215,11 +217,6 @@ const CardEditor = () => {
             }
           }
         );
-
-        // Si la API devuelve un ID, guardarlo en la tarjeta local como apiId
-        if (response.data && response.data.id && localCardId) {
-          updateCard(localCardId, { apiId: response.data.id });
-        }
 
         toast.success('VCard guardada en la nube exitosamente 🎉');
       } catch (error) {
