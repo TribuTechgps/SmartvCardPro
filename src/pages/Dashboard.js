@@ -65,13 +65,17 @@ const Dashboard = () => {
   };
 
   const handleCopyLink = (cardId) => {
-    const link = `${window.location.origin}/preview/${cardId}`;
+    const card = cards.find(c => c.id === cardId);
+    const idForUrl = card?.apiId ?? cardId;
+    const link = `${window.location.origin}/preview/${idForUrl}`;
     navigator.clipboard.writeText(link);
     toast.success('Enlace copiado al portapapeles');
   };
 
   const handleShare = async (cardId) => {
-    const link = `${window.location.origin}/preview/${cardId}`;
+    const card = cards.find(c => c.id === cardId);
+    const idForUrl = card?.apiId ?? cardId;
+    const link = `${window.location.origin}/preview/${idForUrl}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -98,7 +102,9 @@ const Dashboard = () => {
   };
 
   const getQRUrl = (cardId) => {
-    return `${window.location.origin}/preview/${cardId}`;
+    const card = cards.find(c => c.id === cardId);
+    const idForUrl = card?.apiId ?? cardId;
+    return `${window.location.origin}/preview/${idForUrl}`;
   };
 
   const stats = {

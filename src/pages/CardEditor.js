@@ -132,11 +132,14 @@ const CardEditor = () => {
     };
 
     // Guardar localmente
+    let localCardId = null;
     if (currentCard) {
       updateCard(currentCard.id, cardData);
+      localCardId = currentCard.id;
       toast.success('Tarjeta actualizada correctamente');
     } else {
       const newCard = createCard(cardData);
+      localCardId = newCard.id;
       toast.success('Tarjeta creada correctamente');
       navigate(`/preview/${newCard.id}`);
     }
@@ -212,6 +215,11 @@ const CardEditor = () => {
             }
           }
         );
+
+        // Si la API devuelve un ID, guardarlo en la tarjeta local como apiId
+        if (response.data && response.data.id && localCardId) {
+          updateCard(localCardId, { apiId: response.data.id });
+        }
 
         toast.success('VCard guardada en la nube exitosamente 🎉');
       } catch (error) {

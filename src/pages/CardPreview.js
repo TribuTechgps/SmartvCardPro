@@ -20,6 +20,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import useCardStore from '../store/cardStore';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
+import axios from 'axios';
 
 const CardPreview = () => {
   const { cardId } = useParams();
@@ -29,12 +30,112 @@ const CardPreview = () => {
   
   const [card, setCard] = useState(null);
   const [showQR, setShowQR] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundCard = cards.find(c => c.id === cardId);
-    if (foundCard) {
-      setCard(foundCard);
-    }
+    const loadCard = async () => {
+      setLoading(true);
+      
+      // Primero buscar en el store local (por id local o apiId)
+      let foundCard = cards.find(
+        (c) => c.id === cardId || (c.apiId && c.apiId.toString() === cardId?.toString())
+      );
+      
+      if (foundCard) {
+        setCard(foundCard);
+        setLoading(false);
+        return;
+      }
+
+      // Si no se encuentra en el store, intentar leer directamente de localStorage
+      try {
+        const storedData = localStorage.getItem('digital-cards-storage');
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          const state = parsed.state || parsed;
+          if (state.cards && Array.isArray(state.cards)) {
+            foundCard = state.cards.find(
+              (c) => c.id === cardId || (c.apiId && c.apiId.toString() === cardId?.toString())
+            );
+            if (foundCard) {
+              setCard(foundCard);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error reading from localStorage:', error);
+      }
+
+      // Si aún no se encuentra, intentar buscar en la API usando el ID del QR (apiId)
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined;
+
+        // Usar el ID del QR como ID del recurso en la API
+        const response = await axios.get(
+          `https://startapp360.com/api/v1/userimage/${cardId}/`,
+          headers ? { headers } : undefined
+        );
+
+        const apiCard = response.data;
+
+        if (apiCard && apiCard.vcard_data) {
+          // Convertir el formato de la API al formato esperado
+          const convertedCard = {
+            id: apiCard.vcard_data.id || cardId,
+            apiId: apiCard.id,
+            contactData: {
+              firstName: apiCard.vcard_data.firstName || '',
+              lastName: apiCard.vcard_data.lastName || '',
+              company: apiCard.vcard_data.company || '',
+              jobTitle: apiCard.vcard_data.jobTitle || '',
+              email: apiCard.vcard_data.email || '',
+              phone: apiCard.vcard_data.phone || '',
+              website: apiCard.vcard_data.website || '',
+              address: apiCard.vcard_data.address || '',
+              linkedin: apiCard.vcard_data.linkedin || '',
+              twitter: apiCard.vcard_data.twitter || '',
+              instagram: apiCard.vcard_data.instagram || '',
+              facebook: apiCard.vcard_data.facebook || '',
+              whatsapp: apiCard.vcard_data.whatsapp || '',
+              bio: apiCard.vcard_data.bio || '',
+              photo: apiCard.image_base64 ? `data:image/png;base64,${apiCard.image_base64}` : null,
+              logo: null,
+            },
+            design: apiCard.vcard_data.design || {
+              template: 'modern',
+              primaryColor: '#E91E63',
+              secondaryColor: '#5C4033',
+              backgroundColor: '#36454F',
+              textColor: '#F5F1EF',
+              fontFamily: 'Inter',
+              borderRadius: '12px',
+              shadow: 'medium',
+              layout: 'vertical',
+            },
+            createdAt: apiCard.created_at || new Date().toISOString(),
+            updatedAt: apiCard.updated_at || new Date().toISOString(),
+          };
+
+          setCard(convertedCard);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching from API:', error);
+      }
+
+      // Si no se encontró en ningún lugar
+      setLoading(false);
+    };
+
+    loadCard();
   }, [cardId, cards]);
 
   const handleCopyLink = () => {
@@ -114,6 +215,18 @@ const CardPreview = () => {
         break;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-luxury flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-fucsia-500 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
+          <h2 className="text-xl font-semibold text-texto mb-2">Cargando tarjeta...</h2>
+          <p className="text-chocolate-200">Buscando información de la tarjeta</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!card) {
     return (

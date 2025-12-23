@@ -46,6 +46,8 @@ const useCardStore = create(
       createCard: (cardData = {}) => {
         const newCard = {
           id: uuidv4(),
+          // ID de la tarjeta en la API (para compartir públicamente)
+          apiId: cardData.apiId || null,
           contactData: { ...get().defaultContactData, ...cardData.contactData },
           design: { ...get().defaultDesign, ...cardData.design },
           qrCode: null,

@@ -33,14 +33,16 @@ const QRGenerator = () => {
   useEffect(() => {
     if (currentCard) {
       setSelectedCard(currentCard);
-      setPreviewUrl(`${window.location.origin}/preview/${currentCard.id}`);
+      const idForUrl = currentCard.apiId ?? currentCard.id;
+      setPreviewUrl(`${window.location.origin}/preview/${idForUrl}`);
     }
   }, [currentCard]);
 
   const handleCardSelect = (card) => {
     setSelectedCard(card);
     setCurrentCard(card.id);
-    setPreviewUrl(`${window.location.origin}/preview/${card.id}`);
+    const idForUrl = card.apiId ?? card.id;
+    setPreviewUrl(`${window.location.origin}/preview/${idForUrl}`);
   };
 
   const handleDownload = () => {
