@@ -18,8 +18,29 @@ const Auth = () => {
     const [userId, setUserId] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
+    
+    // Estados de validación
     const [emailValid, setEmailValid] = useState(false);
+    const [emailError, setEmailError] = useState('');
     const [usernameValid, setUsernameValid] = useState(false);
+    const [usernameError, setUsernameError] = useState('');
+    
+    // Validación individual de contraseña
+    const [passwordChecks, setPasswordChecks] = useState({
+        length: false,
+        lettersNumbers: false,
+        special: false
+    });
+    const [passwordValid, setPasswordValid] = useState(false);
+    
+    // Validación individual de confirmación de contraseña
+    const [password2Checks, setPassword2Checks] = useState({
+        length: false,
+        lettersNumbers: false,
+        special: false
+    });
+    const [password2Valid, setPassword2Valid] = useState(false);
+    const [passwordMatch, setPasswordMatch] = useState(false);
 
     const handleLogin = () => {
         if (!email || !password) {
@@ -60,7 +81,12 @@ const Auth = () => {
 
     const handleRegister = () => {
         if (password !== password2) {
-            toast.error('Password not match ❌');
+            toast.error('Passwords do not match ❌');
+            return;
+        }
+
+        if (!passwordValid || !password2Valid) {
+            toast.error('Please ensure your password meets all requirements');
             return;
         }
 
@@ -92,6 +118,11 @@ const Auth = () => {
             return;
         }
 
+        if (!passwordValid || !password2Valid) {
+            toast.error('Please ensure your password meets all requirements');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -108,7 +139,7 @@ const Auth = () => {
             }
 
             const payload = {
-                email: user.email,  // Asegúrate de obtener estos valores correctamente
+                email: user.email,
                 username: user.username,
                 password,
                 password2
@@ -137,16 +168,55 @@ const Auth = () => {
     const toggleRegister = () => {
         setIsRegistering(!isRegistering);
         setIsChangingPassword(false);
+        // Resetear validaciones
+        setEmail('');
+        setPassword('');
+        setPassword2('');
+        setUsername('');
+        setEmailValid(false);
+        setEmailError('');
+        setUsernameValid(false);
+        setUsernameError('');
+        setPasswordChecks({ length: false, lettersNumbers: false, special: false });
+        setPasswordValid(false);
+        setPassword2Checks({ length: false, lettersNumbers: false, special: false });
+        setPassword2Valid(false);
+        setPasswordMatch(false);
     };
 
     const toggleChangePassword = () => {
         setIsChangingPassword(true);
         setIsRegistering(false);
+        // Resetear validaciones
+        setEmail('');
+        setPassword('');
+        setPassword2('');
+        setEmailValid(false);
+        setEmailError('');
+        setPasswordChecks({ length: false, lettersNumbers: false, special: false });
+        setPasswordValid(false);
+        setPassword2Checks({ length: false, lettersNumbers: false, special: false });
+        setPassword2Valid(false);
+        setPasswordMatch(false);
     };
 
     const toogleLogin = () => {
         setIsRegistering(false);
         setIsChangingPassword(false);
+        // Resetear validaciones
+        setEmail('');
+        setPassword('');
+        setPassword2('');
+        setUsername('');
+        setEmailValid(false);
+        setEmailError('');
+        setUsernameValid(false);
+        setUsernameError('');
+        setPasswordChecks({ length: false, lettersNumbers: false, special: false });
+        setPasswordValid(false);
+        setPassword2Checks({ length: false, lettersNumbers: false, special: false });
+        setPassword2Valid(false);
+        setPasswordMatch(false);
     };
 
     const toggleShowPassword = () => {
@@ -157,25 +227,108 @@ const Auth = () => {
         setShowPassword2(!showPassword2);
     };
 
+    // Validación de email
     const validateEmail = (email) => {
+        if (!email) {
+            setEmailError('Please enter a valid email');
+            setEmailValid(false);
+            return false;
+        }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+        if (emailRegex.test(email)) {
+            setEmailError('Valid email');
+            setEmailValid(true);
+            return true;
+        } else {
+            setEmailError('Please enter a valid email');
+            setEmailValid(false);
+            return false;
+        }
     };
 
+    // Validación de username
     const validateUsername = (username) => {
-        return username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+        if (!username) {
+            setUsernameError('Username must be at least 3 characters');
+            setUsernameValid(false);
+            return false;
+        }
+        if (username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username)) {
+            setUsernameError('Valid username');
+            setUsernameValid(true);
+            return true;
+        } else {
+            setUsernameError('Username must be at least 3 characters');
+            setUsernameValid(false);
+            return false;
+        }
+    };
+
+    // Validación avanzada de contraseña con validación individual
+    const validatePassword = (pass) => {
+        const checks = {
+            length: pass.length >= 8,
+            lettersNumbers: /[a-zA-Z]/.test(pass) && /[0-9]/.test(pass),
+            special: /[/*\-+!@#$%^&*(),.?":{}|<>]/.test(pass)
+        };
+        
+        setPasswordChecks(checks);
+        
+        const isValid = checks.length && checks.lettersNumbers && checks.special;
+        setPasswordValid(isValid);
+        
+        return isValid;
+    };
+
+    // Validación de confirmación de contraseña
+    const validatePassword2 = (pass2) => {
+        const checks = {
+            length: pass2.length >= 8,
+            lettersNumbers: /[a-zA-Z]/.test(pass2) && /[0-9]/.test(pass2),
+            special: /[/*\-+!@#$%^&*(),.?":{}|<>]/.test(pass2)
+        };
+        
+        setPassword2Checks(checks);
+        
+        const isValid = checks.length && checks.lettersNumbers && checks.special;
+        setPassword2Valid(isValid);
+        
+        // Verificar si coincide con password
+        if (pass2 && password) {
+            setPasswordMatch(pass2 === password);
+        } else {
+            setPasswordMatch(false);
+        }
+        
+        return isValid && pass2 === password;
     };
 
     const handleEmailChange = (e) => {
         const value = e.target.value;
         setEmail(value);
-        setEmailValid(validateEmail(value));
+        validateEmail(value);
     };
 
     const handleUsernameChange = (e) => {
         const value = e.target.value;
         setUsername(value);
-        setUsernameValid(validateUsername(value));
+        validateUsername(value);
+    };
+
+    const handlePasswordChange_input = (e) => {
+        const value = e.target.value;
+        setPassword(value);
+        validatePassword(value);
+        // Si hay password2, validar también la coincidencia
+        if (password2) {
+            validatePassword2(password2);
+        }
+    };
+
+    const handlePassword2Change = (e) => {
+        const value = e.target.value;
+        setPassword2(value);
+        validatePassword2(value);
     };
 
     return (
@@ -215,14 +368,18 @@ const Auth = () => {
                                 </Text>
                                 <InputWrapper>
                                     <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
-                                    {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
-                                    {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
+                                    <ValidationMessage isValid={emailValid}>{emailError || (email ? 'Please enter a valid email' : '')}</ValidationMessage>
                                 </InputWrapper>
                                 <InputWrapper>
-                                    <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                                    <Icon onClick={toggleShowPassword}>
+                                    <PasswordInput 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        placeholder="Password" 
+                                        value={password} 
+                                        onChange={(e) => setPassword(e.target.value)} 
+                                    />
+                                    <PasswordIcon onClick={toggleShowPassword}>
                                         {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                    </Icon>
+                                    </PasswordIcon>
                                 </InputWrapper>
                                 <Button onClick={handleLogin} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} disabled={loading}>
                                     {loading ? <ThreeDots color="#fff" height={20} width={50} /> : 'Iniciar Sesión'}
@@ -238,31 +395,46 @@ const Auth = () => {
                         <Title>Register</Title>
                         <InputWrapper>
                             <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
-                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
-                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
+                            <ValidationMessage isValid={emailValid}>{emailError || (email ? 'Please enter a valid email' : '')}</ValidationMessage>
                         </InputWrapper>
                         <InputWrapper>
                             <Input type="text" placeholder="Username" value={username} onChange={handleUsernameChange} />
-                            {username && !usernameValid && <Alert>Username must be 3-20 characters, letters, numbers and _ only</Alert>}
-                            {username && usernameValid && <SuccessMessage>✓ Valid username format</SuccessMessage>}
+                            <ValidationMessage isValid={usernameValid}>{usernameError || (username ? 'Username must be at least 3 characters' : '')}</ValidationMessage>
                         </InputWrapper>
                         <InputWrapper>
-                            <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                            <Icon onClick={toggleShowPassword}>
+                            <PasswordInput 
+                                type={showPassword ? 'text' : 'password'} 
+                                placeholder="Password" 
+                                value={password} 
+                                onChange={handlePasswordChange_input} 
+                            />
+                            <PasswordIcon onClick={toggleShowPassword}>
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
-                            </Icon>
-                            {password.length < 8 && <Alert>Password must be at least 8 characters long</Alert>}
+                            </PasswordIcon>
+                            <PasswordValidationMessage checks={passwordChecks} isValid={passwordValid} />
                         </InputWrapper>
                         <InputWrapper>
-                            <Input type={showPassword2 ? 'text' : 'password'} placeholder="Confirm Password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
-                            <Icon onClick={toggleShowPassword2}>
+                            <PasswordInput 
+                                type={showPassword2 ? 'text' : 'password'} 
+                                placeholder="Confirm Password" 
+                                value={password2} 
+                                onChange={handlePassword2Change} 
+                            />
+                            <PasswordIcon onClick={toggleShowPassword2}>
                                 {showPassword2 ? <FaEyeSlash /> : <FaEye />}
-                            </Icon>
-                            {password2.length < 8 && <Alert>Password must be at least 8 characters long</Alert>}
+                            </PasswordIcon>
+                            <PasswordValidationMessage checks={password2Checks} isValid={password2Valid && passwordMatch} />
+                            {password2 && password && !passwordMatch && (
+                                <Alert>Passwords do not match</Alert>
+                            )}
+                            {password2 && password && passwordMatch && (
+                                <SuccessMessage>Passwords match ✓</SuccessMessage>
+                            )}
                         </InputWrapper>
                         <Button
                             onClick={handleRegister}
                             style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                            disabled={loading || !emailValid || !usernameValid || !passwordValid || !password2Valid || !passwordMatch}
                         >
                             {loading ? <ThreeDots color="#fff" height={20} width={50} /> : 'Register'}
                         </Button>
@@ -275,24 +447,42 @@ const Auth = () => {
                         <Title>Change Password</Title>
                         <InputWrapper>
                             <Input type="email" placeholder="Email" value={email} onChange={handleEmailChange} />
-                            {email && !emailValid && <Alert>Please enter a valid email address</Alert>}
-                            {email && emailValid && <SuccessMessage>✓ Valid email format</SuccessMessage>}
+                            <ValidationMessage isValid={emailValid}>{emailError || (email ? 'Please enter a valid email' : '')}</ValidationMessage>
                         </InputWrapper>
                         <InputWrapper>
-                            <Input type={showPassword ? 'text' : 'password'} placeholder="New Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                            <Icon onClick={toggleShowPassword}>
+                            <PasswordInput 
+                                type={showPassword ? 'text' : 'password'} 
+                                placeholder="New Password" 
+                                value={password} 
+                                onChange={handlePasswordChange_input} 
+                            />
+                            <PasswordIcon onClick={toggleShowPassword}>
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
-                            </Icon>
+                            </PasswordIcon>
+                            <PasswordValidationMessage checks={passwordChecks} isValid={passwordValid} />
                         </InputWrapper>
                         <InputWrapper>
-                            <Input type={showPassword2 ? 'text' : 'password'} placeholder="Confirm New Password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
-                            <Icon onClick={toggleShowPassword2}>
+                            <PasswordInput 
+                                type={showPassword2 ? 'text' : 'password'} 
+                                placeholder="Confirm New Password" 
+                                value={password2} 
+                                onChange={handlePassword2Change} 
+                            />
+                            <PasswordIcon onClick={toggleShowPassword2}>
                                 {showPassword2 ? <FaEyeSlash /> : <FaEye />}
-                            </Icon>
+                            </PasswordIcon>
+                            <PasswordValidationMessage checks={password2Checks} isValid={password2Valid && passwordMatch} />
+                            {password2 && password && !passwordMatch && (
+                                <Alert>Passwords do not match</Alert>
+                            )}
+                            {password2 && password && passwordMatch && (
+                                <SuccessMessage>Passwords match ✓</SuccessMessage>
+                            )}
                         </InputWrapper>
                         <Button
                             onClick={handlePasswordChange}
                             style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                            disabled={loading || !emailValid || !passwordValid || !password2Valid || !passwordMatch}
                         >
                             {loading ? <ThreeDots color="#fff" height={20} width={50} /> : 'Change Password'}
                         </Button>
@@ -306,23 +496,49 @@ const Auth = () => {
     );
 };
 
+// Componente de mensaje de validación de contraseña con validación individual
+const PasswordValidationMessage = ({ checks, isValid }) => {
+    if (!checks) return null;
+    
+    return (
+        <PasswordValidationContainer>
+            <ValidationLine isValid={checks.length}>
+                8-character password
+            </ValidationLine>
+            <ValidationLine isValid={checks.lettersNumbers}>
+                Include letters and numbers
+            </ValidationLine>
+            <ValidationLine isValid={checks.special}>
+                Special characters/*-+
+            </ValidationLine>
+            {isValid && (
+                <SuccessMessage style={{ marginTop: '8px' }}>Valid password ✓</SuccessMessage>
+            )}
+        </PasswordValidationContainer>
+    );
+};
+
 export default Auth;
 
+// Styled Components
 const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 20px;
   background: linear-gradient(135deg, #5C4033 0%, #36454F 100%);
   background-attachment: fixed;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const AuthBox = styled.div`
   background: linear-gradient(135deg, #5C4033 0%, #36454F 100%);
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(92, 64, 51, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  width: 350px;
+  width: 100%;
+  max-width: 28rem;
   text-align: center;
   border: 1px solid rgba(233, 30, 99, 0.2);
   position: relative;
@@ -341,30 +557,81 @@ const AuthBox = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #F5F1EF;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 `;
 
 const Input = styled.input`
-  width: 94%;
-  padding: 10px;
-  margin-bottom: 10px;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 4px;
   border: 1px solid #4A3329;
   border-radius: 8px;
   font-size: 1rem;
   color: #F5F1EF;
   background: rgba(54, 69, 79, 0.5);
   backdrop-filter: blur(10px);
+  box-sizing: border-box;
+  
   &:focus {
     outline: none;
     border-color: #E91E63;
     box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
   }
+  
   &::placeholder {
     color: #BA9C8D;
   }
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 48px;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-bottom: 16px;
+  text-align: left;
+`;
+
+const PasswordIcon = styled.span`
+  position: absolute;
+  right: 16px;
+  top: 28px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #BA9C8D;
+  font-size: 1.2rem;
+  
+  &:hover {
+    color: #E91E63;
+  }
+`;
+
+const ValidationMessage = styled.div`
+  color: ${props => props.isValid ? '#28a745' : '#dc3545'};
+  font-size: 0.875rem;
+  margin-top: 6px;
+  text-align: left;
+  min-height: 20px;
+  text-shadow: ${props => props.isValid ? '0 0 5px rgba(40, 167, 69, 0.5)' : '0 0 5px rgba(220, 53, 69, 0.5)'};
+`;
+
+const PasswordValidationContainer = styled.div`
+  margin-top: 8px;
+  text-align: left;
+`;
+
+const ValidationLine = styled.div`
+  color: ${props => props.isValid ? '#28a745' : '#dc3545'};
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+  text-shadow: ${props => props.isValid ? '0 0 5px rgba(40, 167, 69, 0.5)' : '0 0 5px rgba(220, 53, 69, 0.5)'};
+  transition: color 0.3s ease;
 `;
 
 const Button = styled.button`
@@ -375,11 +642,12 @@ const Button = styled.button`
   font-size: 1rem;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
   box-shadow: 0 0 20px rgba(233, 30, 99, 0.3);
   position: relative;
   overflow: hidden;
+  opacity: ${props => props.disabled ? 0.6 : 1};
 
   &::before {
     content: '';
@@ -392,13 +660,13 @@ const Button = styled.button`
     transition: left 0.5s;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: linear-gradient(135deg, #DB2777 0%, #BE185D 100%);
     box-shadow: 0 10px 40px rgba(233, 30, 99, 0.4);
     transform: translateY(-2px);
   }
 
-  &:hover::before {
+  &:hover:not(:disabled)::before {
     left: 100%;
   }
 `;
@@ -406,7 +674,7 @@ const Button = styled.button`
 const Text = styled.div`
   font-size: 0.9rem;
   color: #D1BDB3;
-  margin-top: 10px;
+  margin-top: 16px;
 `;
 
 const LinkText = styled.span`
@@ -414,42 +682,25 @@ const LinkText = styled.span`
   cursor: pointer;
   font-weight: bold;
   text-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+  
   &:hover {
     text-decoration: underline;
     color: #22D3EE;
   }
 `;
 
-const InputWrapper = styled.div`
-  position: relative;
-  width: 94%;
-  margin-bottom: 10px;
-`;
-
-const Icon = styled.span`
-  position: absolute;
-  right: 10px;
-  top: 30%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #BA9C8D;
-  &:hover {
-    color: #E91E63;
-  }
-`;
-
 const Alert = styled.div`
-  color: #E91E63;
-  font-size: 0.8rem;
-  margin-top: 5px;
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 6px;
   text-align: left;
-  text-shadow: 0 0 5px rgba(233, 30, 99, 0.5);
+  text-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
 `;
 
 const SuccessMessage = styled.div`
-  color: #4CAF50;
-  font-size: 0.8rem;
-  margin-top: 5px;
+  color: #28a745;
+  font-size: 0.875rem;
+  margin-top: 6px;
   text-align: left;
-  text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+  text-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
 `;
