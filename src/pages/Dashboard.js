@@ -1,27 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Plus, 
-  Edit3, 
-  QrCode, 
-  Mail, 
-  Eye, 
-  Trash2, 
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Plus,
+  Edit3,
+  QrCode,
+  Mail,
+  Eye,
+  Trash2,
   Copy,
   Share2,
   Calendar,
-  TrendingUp,
-  X
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import useCardStore from '../store/cardStore';
 import toast from 'react-hot-toast';
+import ImageUpload from '../components/ImageUpload';
+import ImageGallery from '../components/ImageGallery';
 
 const Dashboard = () => {
   const { cards, deleteCard, setCurrentCard } = useCardStore();
-  const location = useLocation();
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState(null);
+  const [refreshImages, setRefreshImages] = useState(0);
+  const [activeTab, setActiveTab] = useState('cards'); // 'cards' or 'images'
 
   const checkAuthAndRedirect = (path) => {
     const token = localStorage.getItem('token');
@@ -53,6 +56,8 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('auth_username');
+    localStorage.removeItem('auth_password');
     toast.success('Sesión cerrada correctamente');
     window.location.href = '/';
   };
@@ -99,6 +104,10 @@ const Dashboard = () => {
 
   const getQRUrl = (cardId) => {
     return `${window.location.origin}/preview/${cardId}`;
+  };
+
+  const handleImageUploadSuccess = () => {
+    setRefreshImages(prev => prev + 1);
   };
 
   const stats = {
@@ -183,8 +192,39 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex space-x-4 border-b border-borde">
+        <button
+          onClick={() => setActiveTab('cards')}
+          className={`px-6 py-3 font-medium transition-all ${
+            activeTab === 'cards'
+              ? 'text-fucsia-300 border-b-2 border-fucsia-500'
+              : 'text-chocolate-200 hover:text-texto'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <Edit3 size={18} />
+            <span>Mis Tarjetas</span>
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('images')}
+          className={`px-6 py-3 font-medium transition-all ${
+            activeTab === 'images'
+              ? 'text-fucsia-300 border-b-2 border-fucsia-500'
+              : 'text-chocolate-200 hover:text-texto'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <ImageIcon size={18} />
+            <span>Mis Imágenes</span>
+          </div>
+        </button>
+      </div>
+
       {/* Cards List */}
-      <div className="luxury-card rounded-lg shine-effect">
+      {activeTab === 'cards' && (
+        <div className="luxury-card rounded-lg shine-effect">
         <div className="px-6 py-4 border-b border-borde bg-gradient-to-r from-chocolate-600 to-carbon-600">
           <h2 className="text-lg font-semibold text-texto">Mis Tarjetas</h2>
         </div>
@@ -291,7 +331,16 @@ const Dashboard = () => {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Images Section */}
+      {activeTab === 'images' && (
+        <div className="space-y-6">
+          <ImageUpload onUploadSuccess={handleImageUploadSuccess} />
+          <ImageGallery refreshTrigger={refreshImages} />
+        </div>
+      )}
 
       {/* QR Modal */}
       {showQRModal && selectedCardId && (

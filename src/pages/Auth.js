@@ -54,6 +54,9 @@ const Auth = () => {
                 const { access } = response.data;
                 if (access) {
                     localStorage.setItem('token', access);
+                    // También guardar credenciales para Basic Auth (necesario para /userimage/)
+                    localStorage.setItem('auth_username', email);
+                    localStorage.setItem('auth_password', password);
                     setToken(access);
                     window.location.href = '/';
                 } else {

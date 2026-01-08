@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Save, 
-  Eye, 
-  Palette, 
-  User, 
-  Building, 
-  Mail, 
-  Phone, 
-  Globe, 
+import {
+  Save,
+  Eye,
+  Palette,
+  User,
+  Building,
+  Mail,
+  Phone,
+  Globe,
   MapPin,
   Linkedin,
   Twitter,
@@ -17,7 +17,9 @@ import {
   MessageCircle,
   Upload,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Cloud,
+  HardDrive
 } from 'lucide-react';
 import useCardStore from '../store/cardStore';
 import toast from 'react-hot-toast';
@@ -309,10 +311,21 @@ const CardEditor = () => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-gradient-to-r from-fucsia-500 to-fucsia-600 hover:from-fucsia-600 hover:to-fucsia-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-glow-fucsia shine-effect disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-6 py-2 rounded-lg flex items-center space-x-2 transition-all shine-effect disabled:opacity-50 disabled:cursor-not-allowed ${
+              isAuthenticated
+                ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-glow-fucsia'
+                : 'bg-gradient-to-r from-fucsia-500 to-fucsia-600 hover:from-fucsia-600 hover:to-fucsia-700 text-white shadow-glow-fucsia'
+            }`}
+            title={isAuthenticated ? 'Guardar local y en la nube' : 'Guardar solo localmente (inicia sesión para guardar en la nube)'}
           >
+            {isAuthenticated ? <Cloud size={18} /> : <HardDrive size={18} />}
             <Save size={18} />
-            <span>{saving ? 'Guardando...' : 'Guardar'}</span>
+            <span>
+              {saving
+                ? (isAuthenticated ? 'Guardando en nube...' : 'Guardando...')
+                : (isAuthenticated ? 'Guardar en Nube' : 'Guardar Local')
+              }
+            </span>
           </button>
         </div>
       </div>
